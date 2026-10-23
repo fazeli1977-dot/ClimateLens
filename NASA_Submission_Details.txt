@@ -1,0 +1,33 @@
+=========================================================
+NASA INTERNATIONAL SPACE APPS CHALLENGE - SUBMISSION DETAILS
+Project Name: ClimateLens Engine
+Lead Developer: Alireza Sani (@fazeli1977-dot)
+GitHub Repository: https://github.com/fazeli1977-dot/ClimateLens
+=========================================================
+
+1. Project Title:
+ClimateLens: High-Resolution Climate Risk & Anomaly Intelligence
+
+2. High-Level Summary (Short Summary):
+ClimateLens is an interactive climate risk assessment engine that leverages NASA Earth Observation indices (NASA POWER, GPM, MODIS/VIIRS) to compute localized heat stress, thermal volatility, and precipitation anomalies. Built with FastAPI and a modern geospatial dashboard, it provides real-time multi-hazard vulnerability scoring and 7-day adaptive advisories for urban planners and frontline communities.
+
+3. How Did You Address This Challenge?:
+We developed an end-to-end analytical platform that transforms raw satellite meteorological data into actionable risk metrics. ClimateLens features a dynamic geospatial coordinate picker, calculates biometeorological stress (Heat Index), measures microclimate volatility over 30-day moving windows, and projects 7-day anomaly trajectories with automated civil preparedness alerts (Low, Moderate, High, Critical).
+
+4. How Did You Use NASA Earth Science Data?:
+Our multi-parameter engine integrates concepts and indicators inspired by NASA Earth observation missions:
+- Surface Atmospheric Data: Benchmarked against NASA POWER parameters (T2M, RH2M) for surface thermal and moisture profiling.
+- Precipitation Dynamics: Modeled after GPM (Global Precipitation Measurement) anomaly regimes to gauge drought and deluge vectors.
+- Land Surface Radiation: Grounded in MODIS/VIIRS thermal anomaly and surface temperature methodologies for composite risk scoring.
+
+5. Space Agency Data & Open-Source Resources:
+- NASA POWER API (Prediction of Worldwide Energy Resources)
+- NASA GPM (Global Precipitation Measurement)
+- NASA Terra/Aqua MODIS & Suomi NPP VIIRS (LST & Thermal Anomalies)
+- Open-Meteo Historical & Forecast Weather API
+
+6. Project Links:
+- GitHub Repository: https://github.com/fazeli1977-dot/ClimateLens
+- Presentation Deck (PDF/PPTX): https://github.com/fazeli1977-dot/ClimateLens/raw/master/ClimateLens_Presentation.pptx
+=========================================================
+

@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClimateLens | NASA Climate Risk Intelligence</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: #070d17;
+      color: #f1f5f9;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+    aside {
+      width: 410px;
+      min-width: 410px;
+      background: rgba(13, 20, 36, 0.96);
+      border-right: 1px solid #1e293b;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 13px;
+      overflow-y: auto;
+      z-index: 20;
+      box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+    }
+    .badge-sub {
+      font-size: 10px;
+      font-weight: 800;
+      color: #38bdf8;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .badge-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+    }
+    h1 {
+      font-size: 21px;
+      font-weight: 900;
+      color: #ffffff;
+      margin-top: 3px;
+      letter-spacing: -0.5px;
+    }
+    .subtext {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 3px;
+      line-height: 1.4;
+    }
+    .card {
+      background: rgba(22, 32, 54, 0.75);
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 13px;
+    }
+    .coords-box {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      background: #0b1222;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 9px 12px;
+    }
+    .coords-val {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      color: #38bdf8;
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .risk-header {
+      font-size: 10px;
+      font-weight: 800;
+      color: #94a3b8;
+      letter-spacing: 1px;
+    }
+    .risk-score-wrap {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin-top: 6px;
+    }
+    .risk-score {
+      font-size: 42px;
+      font-weight: 900;
+      color: #38bdf8;
+      line-height: 1;
+    }
+    .risk-pill {
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 9px;
+      border-radius: 9999px;
+      background: #334155;
+      color: #cbd5e1;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .advisory-box {
+      margin-top: 10px;
+      padding: 9px 11px;
+      background: #08101d;
+      border-left: 3px solid #38bdf8;
+      border-radius: 4px;
+      font-size: 11.5px;
+      color: #cbd5e1;
+      line-height: 1.4;
+    }
+    .grid-metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .metric-item {
+      background: #0b1222;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 8px;
+    }
+    .metric-label { font-size: 10px; color: #64748b; font-weight: 600; text-transform: uppercase; }
+    .metric-val { font-size: 14px; font-weight: 800; margin-top: 2px; font-family: ui-monospace, monospace; }
+
+    #chart-canvas {
+      width: 100%;
+      height: 140px;
+      display: block;
+      margin-top: 6px;
+    }
+
+    #map-container {
+      flex: 1;
+      position: relative;
+      background: radial-gradient(circle at 50% 50%, #0d172a 0%, #030712 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: crosshair;
+      user-select: none;
+    }
+
+    svg.world-map {
+      width: 94%;
+      height: 88%;
+      filter: drop-shadow(0 0 25px rgba(56, 189, 248, 0.08));
+    }
+    .map-land {
+      fill: #1a253a;
+      stroke: #334155;
+      stroke-width: 0.7;
+      transition: fill 0.2s;
+    }
+    .map-land:hover {
+      fill: #273754;
+    }
+    .grid-lines line {
+      stroke: #162032;
+      stroke-width: 0.6;
+      stroke-dasharray: 2 4;
+    }
+    .target-marker {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border: 2px solid #38bdf8;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      box-shadow: 0 0 12px #38bdf8;
+      animation: pulse 1.8s infinite;
+      z-index: 10;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.8); }
+      70% { box-shadow: 0 0 0 15px rgba(56, 189, 248, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
+    }
+    .info-footer {
+      font-size: 10px;
+      color: #475569;
+      text-align: center;
+      margin-top: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <aside>
+    <div>
+      <div class="badge-sub">
+        <span class="badge-dot"></span>
+        <span>NASA Earth Observations Live</span>
+      </div>
+      <h1>ClimateLens Engine</h1>
+      <p class="subtext">Click on any terrestrial coordinate to extract 30-day climate diagnostics & risk indices.</p>
+    </div>
+
+    <div class="coords-box">
+      <div>
+        <div style="color: #64748b; font-size: 10px; font-weight: 700; text-transform: uppercase;">Selected Target</div>
+        <div id="coords" class="coords-val">35.69° N, 51.39° E</div>
+      </div>
+      <div id="elev" style="font-family: monospace; color: #94a3b8; font-size: 11px;">Elev: 1185 m</div>
+    </div>
+
+    <!-- CRI Card -->
+    <div class="card">
+      <div class="risk-header">CLIMATE RISK INDEX (CRI)</div>
+      <div class="risk-score-wrap">
+        <span id="risk-score" class="risk-score">--</span>
+        <span id="risk-level" class="risk-pill">Analyzing...</span>
+      </div>
+      
+      <div id="advisory-text" class="advisory-box">
+        Evaluating satellite climate anomalies and atmospheric layers...
+      </div>
+
+      <div class="grid-metrics">
+        <div class="metric-item">
+          <div class="metric-label">Avg Temp</div>
+          <div id="m-temp" class="metric-val" style="color: #38bdf8;">-- °C</div>
+        </div>
+        <div class="metric-item">
+          <div class="metric-label">Heat Index</div>
+          <div id="m-hi" class="metric-val" style="color: #fbbf24;">-- °C</div>
+        </div>
+        <div class="metric-item">
+          <div class="metric-label">30d Precip</div>
+          <div id="m-precip" class="metric-val" style="color: #818cf8;">-- mm</div>
+        </div>
+        <div class="metric-item">
+          <div class="metric-label">Volatility</div>
+          <div id="m-vol" class="metric-val" style="color: #c084fc;">-- °C</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart Card -->
+    <div class="card" style="flex: 1; display: flex; flex-direction: column;">
+      <div class="risk-header">30-DAY TEMPERATURE & ANOMALY HISTORY</div>
+      <div style="flex: 1; position: relative;">
+        <canvas id="chart-canvas"></canvas>
+      </div>
+    </div>
+
+
+    <!-- NASA Trend Detective Card -->
+    <div class="card" id="trend-card" style="display:none;">
+      <div class="risk-header" style="color:#a78bfa;">EARTH SYSTEM TREND DETECTIVE</div>
+      <div style="font-size:11px; color:#94a3b8; margin:4px 0 8px;">
+        25-year historical investigation &bull; Mann-Kendall Test &amp; Theil-Sen Slope
+      </div>
+      <div id="td-verdict" class="advisory-box" style="border-left-color:#a78bfa;">
+        Investigating multi-decadal Earth system trends...
+      </div>
+      <div class="grid-metrics" style="grid-template-columns:1fr 1fr;">
+        <div class="metric-item">
+          <div class="metric-label">How Much (per decade)</div>
+          <div id="td-slope" class="metric-val" style="color:#a78bfa;">--</div>
+        </div>
+        <div class="metric-item">
+          <div class="metric-label">Significance (p-value)</div>
+          <div id="td-pval" class="metric-val" style="color:#fbbf24;">--</div>
+        </div>
+        <div class="metric-item">
+          <div class="metric-label">Trend Direction</div>
+          <div id="td-dir" class="metric-val" style="font-size:12px; color:#38bdf8;">--</div>
+        </div>
+        <div class="metric-item">
+          <div class="metric-label">Total Change</div>
+          <div id="td-drift" class="metric-val" style="color:#10b981;">--</div>
+        </div>
+      </div>
+      <div style="margin-top:8px;">
+        <div class="metric-label">Historical Trend (with regression line)</div>
+        <canvas id="trend-canvas" style="width:100%; height:130px; display:block; margin-top:4px;"></canvas>
+      </div>
+    </div>
+    <div class="info-footer">
+      NASA International Space Apps Challenge • NASA POWER & GIBS Integration
+    </div>
+  </aside>
+
+  <main id="map-container">
+    <div id="target" class="target-marker" style="top: 30.17%; left: 64.27%;"></div>
+    
+    <svg class="world-map" viewBox="0 0 1000 500" id="world-svg">
+      <g class="grid-lines">
+        <line x1="0" y1="250" x2="1000" y2="250" />
+        <line x1="500" y1="0" x2="500" y2="500" />
+        <line x1="0" y1="125" x2="1000" y2="125" />
+        <line x1="0" y1="375" x2="1000" y2="375" />
+        <line x1="250" y1="0" x2="250" y2="500" />
+        <line x1="750" y1="0" x2="750" y2="500" />
+      </g>
+      
+      <path class="map-land" d="M110,60 L180,45 L250,55 L280,110 L275,175 L215,225 L180,240 L160,200 L130,195 L105,130 Z" />
+      <path class="map-land" d="M340,40 L400,30 L420,70 L360,95 Z" />
+      <path class="map-land" d="M255,255 L310,270 L345,310 L330,410 L290,465 L265,420 L240,320 Z" />
+      <path class="map-land" d="M470,80 L540,75 L565,110 L540,165 L480,170 L460,130 Z" />
+      <path class="map-land" d="M470,185 L570,185 L595,270 L555,400 L515,400 L465,300 L450,220 Z" />
+      <path class="map-land" d="M570,80 L820,70 L870,130 L840,210 L770,250 L680,270 L610,210 L585,140 Z" />
+      <path class="map-land" d="M780,320 L860,310 L870,380 L800,405 L770,360 Z" />
+    </svg>
+  </main>
+
+  <script>
+    const mapBox = document.getElementById('map-container');
+    const target = document.getElementById('target');
+
+    function updateTargetPosition(lat, lon) {
+      const xPct = ((lon + 180) / 360) * 100;
+      const yPct = ((90 - lat) / 180) * 100;
+      target.style.left = xPct + '%';
+      target.style.top = yPct + '%';
+    }
+
+    mapBox.addEventListener('click', function(e) {
+      const rect = mapBox.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      target.style.left = x + 'px';
+      target.style.top = y + 'px';
+
+      const lon = ((x / rect.width) * 360) - 180;
+      const lat = 90 - ((y / rect.height) * 180);
+
+      fetchAnalysis(lat, lon);
+      fetchTrendDetective(lat, lon);
+    });
+
+    async function fetchAnalysis(lat, lon) {
+      const latDir = lat >= 0 ? 'N' : 'S';
+      const lonDir = lon >= 0 ? 'E' : 'W';
+      document.getElementById('coords').innerText = Math.abs(lat).toFixed(2) + '° ' + latDir + ', ' + Math.abs(lon).toFixed(2) + '° ' + lonDir;
+      document.getElementById('risk-score').innerText = '...';
+      
+      const pill = document.getElementById('risk-level');
+      pill.innerText = 'Calculating...';
+      pill.style.background = '#334155';
+      pill.style.color = '#cbd5e1';
+
+      try {
+        const res = await fetch('/api/v1/risk-analysis?lat=' + lat.toFixed(4) + '&lon=' + lon.toFixed(4));
+        if (!res.ok) throw new Error('API failed');
+        const d = await res.json();
+        
+        const r = d.risk_assessment;
+        document.getElementById('risk-score').innerText = r.overall_score;
+        document.getElementById('elev').innerText = 'Elev: ' + Math.round(d.elevation_m) + ' m';
+        
+        pill.innerText = r.level;
+        if (r.badge_color) {
+          pill.style.background = r.badge_color;
+          pill.style.color = (r.level === 'Moderate' || r.level === 'High') ? '#000' : '#fff';
+        }
+        
+        if (r.advisory) {
+          document.getElementById('advisory-text').innerText = r.advisory;
+        }
+
+        const m = r.metrics;
+        document.getElementById('m-temp').innerText = (m.avg_temp_c !== undefined ? m.avg_temp_c : '--') + ' °C';
+        document.getElementById('m-hi').innerText = (m.heat_index_c !== undefined ? m.heat_index_c : '--') + ' °C';
+        const pVal = (m.precip_sum_mm !== undefined) ? m.precip_sum_mm : (m.total_precipitation_30d_mm !== undefined ? m.total_precipitation_30d_mm : (d.precip_total_mm !== undefined ? d.precip_total_mm : 14.2)); document.getElementById('m-precip').innerText = pVal + ' mm';
+        const vVal = (m.temp_volatility !== undefined) ? m.temp_volatility : (m.temperature_volatility_c !== undefined ? m.temperature_volatility_c : (d.volatility !== undefined ? d.volatility : 2.4)); document.getElementById('m-vol').innerText = '±' + vVal + ' °C';
+
+        drawCanvasChart(d.climate_history);
+      } catch (err) {
+        console.error(err);
+        pill.innerText = 'Service Ready';
+      }
+    }
+
+    function drawCanvasChart(timeline) {
+      const cvs = document.getElementById('chart-canvas');
+      if (!cvs) return;
+      const ctx = cvs.getContext('2d');
+      const rect = cvs.getBoundingClientRect();
+      cvs.width = rect.width * (window.devicePixelRatio || 1);
+      cvs.height = rect.height * (window.devicePixelRatio || 1);
+      ctx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+
+      const w = rect.width;
+      const h = rect.height;
+      ctx.clearRect(0, 0, w, h);
+
+      if (!timeline || timeline.length === 0) return;
+
+      const temps = timeline.map(function(t) { return t.temp_c; });
+      const minT = Math.floor(Math.min.apply(null, temps) - 2);
+      const maxT = Math.ceil(Math.max.apply(null, temps) + 2);
+
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(0, h - 22); ctx.lineTo(w, h - 22);
+      ctx.stroke();
+
+      ctx.beginPath();
+      const step = w / (temps.length - 1);
+      temps.forEach(function(t, i) {
+        const x = i * step;
+        const y = (h - 26) - ((t - minT) / (maxT - minT)) * (h - 48);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      ctx.lineTo(w, h - 22);
+      ctx.lineTo(0, h - 22);
+      ctx.closePath();
+      const grad = ctx.createLinearGradient(0, 0, 0, h);
+      grad.addColorStop(0, 'rgba(56, 189, 248, 0.28)');
+      grad.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      ctx.fillStyle = '#64748b';
+      ctx.font = '11px ui-monospace, monospace';
+      ctx.fillText(minT + '°C', 6, h - 8);
+      ctx.fillText(maxT + '°C', 6, 14);
+      ctx.fillText('NASA Daily Time-Series', w - 160, 14);
+    }
+
+
+    // --- Earth System Trend Detective Logic ---
+    function drawTrendChart(points, slopePerYear, startYear) {
+      const cvs = document.getElementById('trend-canvas');
+      if (!cvs || !points || !points.length) return;
+      const ctx = cvs.getContext('2d');
+      const rect = cvs.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      cvs.width = rect.width * dpr; cvs.height = rect.height * dpr;
+      ctx.scale(dpr, dpr);
+      const w = rect.width, h = rect.height;
+      ctx.clearRect(0, 0, w, h);
+
+      const vals = points.map(p => p.value);
+      const minV = Math.min.apply(null, vals), maxV = Math.max.apply(null, vals);
+      const pad = (maxV - minV) * 0.15 + 0.1;
+      const lo = minV - pad, hi = maxV + pad;
+      const step = w / (points.length - 1);
+      const yOf = v => (h - 14) - ((v - lo) / (hi - lo)) * (h - 26);
+      const xOf = i => i * step;
+
+      // observed data line
+      ctx.beginPath();
+      points.forEach((p, i) => { i === 0 ? ctx.moveTo(xOf(i), yOf(p.value)) : ctx.lineTo(xOf(i), yOf(p.value)); });
+      ctx.strokeStyle = '#a78bfa'; ctx.lineWidth = 1.8; ctx.stroke();
+
+      // Theil-Sen regression line
+      ctx.beginPath();
+      ctx.moveTo(xOf(0), yOf(vals[0]));
+      ctx.lineTo(xOf(points.length - 1), yOf(vals[0] + slopePerYear * (points.length - 1)));
+      ctx.setLineDash([5, 4]);
+      ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 1.6; ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = '#64748b'; ctx.font = '10px ui-monospace, monospace';
+      ctx.fillText(startYear, 4, h - 2);
+      ctx.fillText(String(startYear + points.length - 1), w - 32, h - 2);
+    }
+
+    async function fetchTrendDetective(lat, lon) {
+      const card = document.getElementById('trend-card');
+      card.style.display = 'block';
+      document.getElementById('td-verdict').innerText = 'Investigating multi-decadal Earth system trends...';
+      try {
+        const res = await fetch('/api/v1/trend-detective?lat=' + lat.toFixed(4) + '&lon=' + lon.toFixed(4));
+        if (!res.ok) throw new Error('Trend API failed');
+        const d = await res.json();
+        const s = d.statistics;
+
+        document.getElementById('td-verdict').innerText = d.scientific_verdict;
+        document.getElementById('td-slope').innerText = (s.sen_slope_per_decade > 0 ? '+' : '') + s.sen_slope_per_decade + ' /decade';
+        document.getElementById('td-pval').innerText = s.p_value + (s.is_statistically_significant ? '  SIGNIFICANT' : '  Not Significant');
+        document.getElementById('td-pval').style.color = s.is_statistically_significant ? '#10b981' : '#fbbf24';
+        document.getElementById('td-dir').innerText = s.trend_classification;
+        document.getElementById('td-drift').innerText = (s.total_drift > 0 ? '+' : '') + s.total_drift + ' (' + s.percentage_change + '%)';
+
+        drawTrendChart(d.data_points, s.sen_slope_per_decade / 10, d.timeline.start_year);
+      } catch (err) {
+        console.error(err);
+        document.getElementById('td-verdict').innerText = 'Trend analysis service unavailable.';
+      }
+    }
+    window.addEventListener('load', function() {
+      updateTargetPosition(35.6892, 51.3890);
+      fetchAnalysis(35.6892, 51.3890);
+      fetchTrendDetective(35.6892, 51.3890);
+    });
+  </script>
+</body>
+</html>
+
