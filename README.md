@@ -1,211 +1,170 @@
-# ClimateLens 🌍📊
+# ClimateLens
 
-**Climate-risk intelligence and Earth-system trend analysis using climate and Earth-observation data.**
+**Engineering Intelligence · Software Development · Applied AI**
 
-ClimateLens is an analytical platform for exploring climate risk, Earth-system trends, and spatial-temporal climate indicators using Python-based data workflows and interactive web dashboards.
+ClimateLens is a FastAPI service and interactive web dashboard for climate-risk screening and Earth-system trend analysis. It combines a NASA POWER data client, heuristic risk scoring, and statistical trend detection (Mann-Kendall, Theil-Sen) in a single, self-contained application.
 
----
-
-## Table of Contents
-- [Overview](#overview)
-- [Key Features](#key-features)
-- [Dashboard Screenshots](#dashboard-screenshots)
-- [Project Structure](#project-structure)
-- [Tech Stack](#tech-stack)
-- [Quick Start](#quick-start)
-- [Data Sources](#data-sources)
-- [Use Cases](#use-cases)
-- [Roadmap](#roadmap)
-- [Contributing](#contributing)
-- [License](#license)
-
----
+Repository: https://github.com/fazeli1977-dot/ClimateLens
 
 ## Overview
 
-ClimateLens helps users investigate climate dynamics and risk indicators across regions and time horizons.  
-It is designed for researchers, analysts, and decision-makers who need explainable and visual climate intelligence.
+ClimateLens exposes two analysis endpoints and a browser-based dashboard:
 
-Typical workflows include:
-- loading climate and Earth-observation datasets,
-- preprocessing and feature extraction,
-- trend/risk analysis,
-- visualization in dashboards for rapid interpretation.
+- **Climate risk analysis** (`/api/v1/risk-analysis`): retrieves daily temperature, humidity, and precipitation for a coordinate and lookback window, then computes a 0-100 risk score with thermal-stress, drought, and volatility components.
+- **Earth-system trend detection** (`/api/v1/trend-detective`): returns Mann-Kendall significance, Sen's slope per decade, baseline drift, and a scientific verdict for a multi-decadal series.
 
----
+The application is a prototype/research tool. It is not a validated operational climate-risk service, and its scores and trends should be treated as exploratory indicators rather than authoritative forecasts.
 
-## Key Features
+## Key capabilities
 
-- 📈 **Trend Analysis** for climate indicators over time  
-- 🗺️ **Spatial Climate Risk Mapping** for regions and geographies  
-- 🧠 **Risk Intelligence Workflows** for decision support  
-- 🧪 **Exploratory Data Analysis (EDA)** modules for climate datasets  
-- 🖥️ **Interactive Dashboard Views** for non-technical stakeholders  
+- NASA POWER daily point data client (`T2M`, `RH2M`, `PRECTOTCORR`) with a local synthetic fallback when the upstream request fails.
+- Heat-index approximation and a 0-100 composite risk score (thermal stress, drought, temperature volatility) with Low / Moderate / High / Critical levels.
+- Mann-Kendall trend test and Theil-Sen (median) slope estimation, including Kendall's tau, p-value, and decadal slope.
+- Interactive dashboard: coordinate selection, risk score and advisory, metric grid, daily time-series chart, and trend chart.
+- Automated tests for risk scoring and trend detection.
 
----
-
-## Dashboard Screenshots
-
-> Add screenshots to `docs/images/` and keep these file names (or update the paths below).
-
-### 1) Dashboard Overview
-![Dashboard Overview](docs/images/dashboard-overview.png)
-
-### 2) Climate Risk Map
-![Climate Risk Map](docs/images/risk-map.png)
-
-### 3) Earth-System Trend Analysis
-![Earth-System Trend Analysis](docs/images/trend-analysis.png)
-
-### 4) Regional Comparison Panel
-![Regional Comparison Panel](docs/images/regional-comparison.png)
-
----
-
-## Project Structure
+## Project structure
 
 ```text
 ClimateLens/
-├─ docs/
-│  └─ images/
-├─ data/
-├─ notebooks/
-├─ src/
-├─ app.py (or dashboard entrypoint)
-├─ requirements.txt
+├─ backend/
+│  ├─ app/
+│  │  ├─ main.py
+│  │  └─ services/
+│  │     ├─ nasa_service.py
+│  │     ├─ risk_engine.py
+│  │     ├─ risk_service.py
+│  │     └─ trend_detector.py
+│  └─ tests/
+│     └─ test_risk.py
+├─ frontend/
+│  └─ public/
+│     └─ index.html
+├─ tests/
+│  └─ test_trend_detector.py
+├─ ClimateLens_Presentation.pptx
+├─ NASA_Submission_Details.txt
+├─ pytest.ini
+├─ .gitignore
 └─ README.md
 ```
 
-> If your structure differs, update this section to match the current repository layout.
+## Tech stack (verified)
 
----
+- Python 3.12
+- FastAPI, httpx, Uvicorn
+- Vanilla HTML/CSS/JavaScript dashboard (no build step)
+- pytest (development/testing)
 
-## Tech Stack
+No dependency manifest (`requirements.txt` or `pyproject.toml`) is present in the repository.
 
-- **Python** (data processing, analytics, modeling)
-- **HTML** (dashboard/UI rendering components)
-- Common ecosystem libraries may include: Pandas, NumPy, Plotly/Matplotlib, GeoPandas, etc.
+## Quick start
 
----
+### 1. Clone
 
-## Quick Start
-
-### 1) Clone repository
 ```bash
 git clone https://github.com/fazeli1977-dot/ClimateLens.git
 cd ClimateLens
 ```
 
-### 2) Create virtual environment
+### 2. Virtual environment
+
 ```bash
 python -m venv .venv
-source .venv/bin/activate  # on Windows: .venv\Scripts\activate
 ```
 
-### 3) Install dependencies
+Windows:
+
 ```bash
-pip install -r requirements.txt
+.venv\Scripts\activate
 ```
 
-### 4) Run the app
+macOS/Linux:
+
 ```bash
-python app.py
+source .venv/bin/activate
 ```
 
-> If your app uses Streamlit or another framework, replace command accordingly (e.g. `streamlit run app.py`).
+### 3. Install dependencies
 
----
+```bash
+pip install fastapi httpx uvicorn
+```
 
-## Data Sources
+For tests:
 
-ClimateLens is designed to integrate multi-source climate and Earth-observation datasets to support robust, transparent, and reproducible climate-risk analysis.
+```bash
+pip install pytest
+```
 
-### Source Categories
-- **In-situ and gridded climate observations** (e.g., temperature, precipitation, wind, humidity)
-- **Reanalysis products** for physically consistent historical atmospheric and land-surface variables
-- **Earth-observation/satellite-derived indicators** (e.g., vegetation, land surface temperature, moisture-related metrics)
-- **Hazard and exposure layers** (regional risk maps, geographic boundaries, and contextual indicators)
+### 4. Run
 
-### Data Quality & Governance
-To ensure analytical credibility, data ingestion and processing should follow these principles:
-- **Traceability:** each dataset should be versioned and accompanied by source metadata.
-- **Reproducibility:** preprocessing steps, transformations, and filters should be documented.
-- **Temporal consistency:** analysis periods and update cadence must be explicit.
-- **Spatial consistency:** coordinate reference systems, grid resolution, and regional boundaries should be standardized.
-- **Validation:** key indicators should be checked against known baselines or reference studies.
+```bash
+python -m uvicorn backend.app.main:app --reload
+```
 
-### Attribution & Licensing of Input Data
-Users are responsible for complying with the license terms and attribution requirements of each upstream data provider.  
-When publishing outputs derived from ClimateLens workflows, cite:
-1. The original dataset providers,
-2. The dataset version/release date,
-3. Any preprocessing assumptions that may affect interpretation.
+Open `http://127.0.0.1:8000/` for the dashboard and `http://127.0.0.1:8000/docs` for the API documentation.
 
-> **Recommendation:** Maintain a `docs/data-catalog.md` file listing each source, URL, version, license, and citation format.
+## API
 
----
+### GET /api/v1/risk-analysis
 
-## Use Cases
+Query parameters:
 
-- Climate risk screening for regions/cities  
-- Trend monitoring for temperature/precipitation/extremes  
-- Decision-support for adaptation planning  
-- Communicating risk via visual dashboards  
+- `lat` (float, -90 to 90, required)
+- `lon` (float, -180 to 180, required)
+- `days` (int, 7 to 90, default 30)
 
----
+Returns location, elevation, risk assessment (score, level, metrics, breakdown), and daily climate history.
 
-## Roadmap
+### GET /api/v1/trend-detective
 
-- [ ] Add model-card style documentation for risk methods  
-- [ ] Add scenario-based projections module  
-- [ ] Improve dashboard storytelling and annotations  
-- [ ] Add reproducible benchmark notebooks  
-- [ ] Add automated tests for data pipelines  
+Query parameters:
 
----
+- `lat` (float, default 35.6892)
+- `lon` (float, default 51.3890)
+- `variable` (string, default "T2M"; "T2M" selects the temperature baseline, otherwise precipitation)
+- `start_year` (int, default 2000)
+- `end_year` (int, default 2024)
+
+Returns target, timeline, Mann-Kendall statistics, Sen's slope per decade, drift, percentage change, trend classification, scientific verdict, and data points.
+
+Note: this endpoint currently derives its series from a deterministic in-code baseline rather than a live historical dataset.
+
+## Data sources
+
+- **NASA POWER** (Prediction of Worldwide Energy Resources) daily point API: `T2M`, `RH2M`, `PRECTOTCORR`, community `RE`. Used by `/api/v1/risk-analysis`.
+- When the upstream request fails or returns no data, a local synthetic series is generated from latitude-based heuristics. These values are not measurements.
+- The trend-detective endpoint uses a deterministic synthetic series defined in code; it does not query NASA POWER or other providers.
+- Submission materials (`NASA_Submission_Details.txt`) reference additional NASA Earth-observation concepts (GPM, MODIS/VIIRS) and Open-Meteo, but these are not implemented as data integrations in the current codebase.
+
+Users are responsible for complying with upstream provider terms when integrating or redistributing data.
+
+## Testing
+
+```bash
+python -m pytest -q
+```
+
+The suite contains 4 tests covering heat-index calculation, risk evaluation, and Mann-Kendall trend detection (positive trend and stable series).
+
+## Scope and limitations
+
+- Risk scores and advisories are heuristic indicators, not validated predictions or operational alerting.
+- The NASA POWER fallback and trend-detective series are synthetic/generated, not observations.
+- No authentication, rate limiting, or production hardening is implemented; CORS is permissive (`*`).
+- No dependency manifest or container configuration is included.
 
 ## Contributing
 
-Contributions are welcome.  
-Please open an issue first to discuss major changes, then submit a pull request with clear descriptions.
-
----
+Open an issue to discuss major changes, then submit a pull request with a clear description.
 
 ## License
 
-Choose one of the following depending on your intended usage model.
+No `LICENSE` file is present in this repository, and no license terms are specified. License information is therefore missing; until a license is added by the owner, default copyright protections apply. Users should contact the repository owner before reuse or redistribution.
 
-### Option A — MIT License (Recommended for broad adoption)
-Use MIT if your goal is maximum reuse in research and industry with minimal restrictions.
+## Developer
 
-```text
-MIT License
+Developed by Alireza Sani as part of an international engineering and software portfolio.
 
-Copyright (c) 2026 ClimateLens Contributors
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
-
-### Option B — Apache License 2.0
-Use Apache-2.0 if you want explicit patent grants and stronger legal clarity for commercial use.
-
-### Option C — Research-Only / Custom License
-Use a custom license if you want to restrict production/commercial usage and keep it for academic/research purposes.
-
-> **Important:** If you include third-party datasets, their licenses may impose additional obligations on redistribution and downstream use. Always keep software license and data license compliance documented separately.
+Portfolio: https://github.com/fazeli1977-dot
